@@ -3,280 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Image Classifier Studio</title>
+    <title>Teachable Machine Image Model</title>
+    <!-- นำเข้า Tailwind CSS สำหรับการตกแต่งที่สวยงาม -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .app-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 32px;
-            width: 100%;
-            max-width: 480px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
-            text-align: center;
-        }
-
-        .app-header h1 {
-            font-size: 24px;
-            font-weight: 700;
-            margin: 0 0 8px 0;
-            letter-spacing: -0.5px;
-        }
-
-        .app-header p {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin: 0 0 24px 0;
-        }
-
-        .btn-action {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 12px;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-        }
-
-        .btn-action:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
-        }
-
-        .btn-action:disabled {
-            background-color: var(--border);
-            color: var(--text-muted);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        #view-wrapper {
-            position: relative;
-            width: 280px;
-            height: 280px;
-            margin: 24px auto;
-            border-radius: 20px;
-            overflow: hidden;
-            border: 2px solid var(--border);
-            background-color: #0b0f19;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: inset 0 4px 6px rgba(0,0,0,0.2);
-        }
-
+        /* ตกแต่งเพิ่มเติมสำหรับ Canvas ของกล้องให้ดูโค้งมนและมีมิติ */
         #webcam-container canvas {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover;
-            transform: scaleX(-1); /* ส่องกระจกแบบธรรมชาติ */
-        }
-
-        .timer-badge {
-            position: absolute;
-            bottom: 12px;
-            right: 12px;
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(4px);
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-            color: #38bdf8;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        #label-container {
-            margin-top: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            text-align: left;
-        }
-
-        .prediction-item {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 12px 16px;
-            border-radius: 12px;
-        }
-
-        .prediction-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .progress-bar-bg {
-            background-color: var(--border);
-            height: 6px;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .progress-bar-fill {
-            background: linear-gradient(90deg, #4f46e5, #06b6d4);
-            height: 100%;
-            width: 0%;
-            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 320px;
+            height: auto;
+            margin: 0 auto;
         }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex items-center justify-center p-6">
 
-<div class="app-card">
-    <div class="app-header">
-        <h1>AI Image Classifier</h1>
-        <p>ระบบแยกแยะวัตถุอัจฉริยะ ทำนายผลทุกๆ 3 วินาที</p>
-    </div>
-
-    <button type="button" id="control-btn" class="btn-action" onclick="initializeApp()">
-        เปิดใช้งานระบบ
-    </button>
-
-    <div id="view-wrapper" style="display: none;">
-        <div id="webcam-container"></div>
-        <div class="timer-badge">AI Scan: Every 3s</div>
-    </div>
-
-    <div id="label-container"></div>
-</div>
-
-<!-- Core Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-
-<script type="text/javascript">
-    // ลิงก์โมเดล Teachable Machine ของคุณ[cite: 2]
-    const MODEL_URL = "https://teachablemachine.withgoogle.com/models/8DwRUHUVf/";[cite: 2]
-
-    let model, webcam, maxPredictions;
-    let animationFrameId;
-    let predictionIntervalId;
-
-    async function initializeApp() {
-        const btn = document.getElementById("control-btn");
-        btn.disabled = true;
-        btn.innerText = "กำลังโหลดโมเดล AI...";
-
-        try {
-            // 1. โหลดโมเดลและเมทาดาตา[cite: 2]
-            model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");[cite: 2]
-            maxPredictions = model.getTotalClasses();[cite: 2]
-
-            // 2. ตั้งค่ากล้องเว็บแคม (280x280 เพื่อให้สมส่วนกับ UI)
-            webcam = new tmImage.Webcam(280, 280, true);[cite: 2]
-            await webcam.setup();[cite: 2]
-            await webcam.play();[cite: 2]
-
-            // 3. แสดงพื้นที่แสดงผลกล้องและสร้าง UI รายการผลลัพธ์
-            document.getElementById("view-wrapper").style.display = "block";
-            document.getElementById("webcam-container").appendChild(webcam.canvas);[cite: 2]
-            buildPredictionUI();
-
-            // 4. สั่งให้กล้อง Render ภาพลื่นไหลตามปกติ (Real-time Video Feed)
-            renderWebcamStream();
-
-            // 5. สั่งให้ตัว AI ส่งภาพไปประมวลผลทุกๆ 3 วินาที (3000 ms)
-            predictionIntervalId = setInterval(executePrediction, 3000);
-
-            // ซ่อนปุ่มเปิดระบบเมื่อทำงานสำเร็จเรียบร้อย
-            btn.style.display = "none";
-
-            // รันทำนายผลครั้งแรกทันทีโดยไม่ต้องรอให้ครบ 3 วินาทีก่อน
-            executePrediction();
-
-        } catch (error) {
-            console.error("Initialization Failed:", error);
-            btn.disabled = false;
-            btn.innerText = "เกิดข้อผิดพลาด ลองใหม่อีกครั้ง";
-            alert("ไม่สามารถเข้าถึงกล้อง หรือโหลดโมเดลได้สำเร็จ กรุณาตรวจสอบสิทธิ์การเข้าถึงกล้องของคุณ");
-        }
-    }
-
-    // ฟังก์ชันวาดเฟรมกล้องให้ลื่นไหลต่อเนื่อง
-    function renderWebcamStream() {
-        webcam.update();[cite: 2]
-        animationFrameId = window.requestAnimationFrame(renderWebcamStream);
-    }
-
-    // ฟังก์ชันสร้างโครงสร้าง HTML สำหรับแถบสถานะการทำนายผล
-    function buildPredictionUI() {
-        const container = document.getElementById("label-container");
-        container.innerHTML = ""; // ล้างค่าเก่าออกก่อน
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center border border-slate-100">
+        <!-- ส่วนหัวข้อ -->
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">Teachable Machine</h1>
+        <p class="text-sm text-slate-500 mb-6">ระบบวิเคราะห์รูปภาพผ่านกล้อง (อัปเดตทุก 3 วินาที)</p>
         
-        for (let i = 0; i < maxPredictions; i++) {
-            const item = document.createElement("div");
-            item.className = "prediction-item";
-            item.innerHTML = `
-                <div class="prediction-info">
-                    <span class="class-name">Loading...</span>
-                    <span class="class-percent">0%</span>
-                </div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="bar-${i}"></div>
-                </div>
-            `;
-            container.appendChild(item);
-        }
-    }
+        <!-- ปุ่มกด Start -->
+        <button type="button" onclick="init()" id="start-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-xl transition duration-200 shadow-lg shadow-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 cursor-pointer mb-6">
+            เริ่มทำงาน (Start Camera)
+        </button>
 
-    // ฟังก์ชันดึงภาพปัจจุบันส่งให้ AI ทำนายผล (ทำงานทุกๆ 3 วินาที)
-    async function executePrediction() {
-        if (!model || !webcam) return;
+        <!-- ส่วนแสดงผลกล้อง WebCam -->
+        <div id="webcam-container" class="flex justify-center mb-6 min-h-[240px] items-center bg-slate-100 rounded-2xl border-2 border-dashed border-slate-200 p-2">
+            <span id="placeholder-text" class="text-sm text-slate-400">กดปุ่มด้านบนเพื่อเปิดกล้อง</span>
+        </div>
 
-        const predictions = await model.predict(webcam.canvas);[cite: 2]
-        const items = document.getElementsByClassName("prediction-item");
+        <!-- ส่วนแสดงผลการทำนาย (Labels) -->
+        <div id="label-container" class="space-y-3 text-left"></div>
+    </div>
 
-        for (let i = 0; i < maxPredictions; i++) {
-            const className = predictions[i].className;
-            const probability = predictions[i].probability;
-            const percentage = Math.round(probability * 100);
+    <!-- นำเข้า Scripts ของ TensorFlow และ Teachable Machine -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    
+    <script type="text/javascript">
+        // ลิงก์โมเดลของคุณจาก Teachable Machine
+        const URL = "https://teachablemachine.withgoogle.com/models/8DwRUHUVf/";
 
-            // อัปเดตข้อความและเปอร์เซ็นต์
-            items[i].querySelector(".class-name").innerText = className;
-            items[i].querySelector(".class-percent").innerText = `${percentage}%`;
+        let model, webcam, labelContainer, maxPredictions;
+        let lastPredictTime = 0; // ตัวแปรเก็บเวลาล่าสุดที่ทำการทำนาย
 
-            // อัปเดตความยาวของโปรเกรสบาร์ให้วิ่งอย่างสวยงาม
-            const bar = document.getElementById(`bar-${i}`);
-            bar.style.width = `${percentage}%`;
+        // ฟังก์ชันเริ่มต้นระบบเมื่อกดปุ่ม
+        async function init() {
+            // ซ่อนข้อความ Placeholder และเปลี่ยนสถานะปุ่ม
+            const startBtn = document.getElementById("start-btn");
+            const placeholder = document.getElementById("placeholder-text");
+            if (placeholder) placeholder.remove();
             
-            // เปลี่ยนสีตามระดับความมั่นใจ (มั่นใจมากสีฟ้า/มั่นใจน้อยสีซีดลง)
-            bar.style.opacity = probability > 0.5 ? "1" : "0.5";
-        }
-    }
-</script>
+            startBtn.disabled = true;
+            startBtn.innerText = "กำลังโหลดโมเดล...";
+            startBtn.classList.脫add = "bg-slate-400";
 
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
+            // โหลดโมเดล
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            // ตั้งค่ากล้อง WebCam (กว้าง 320, สูง 320 เพื่อให้เป็นจัตุรัสที่ชัดขึ้น)
+            const flip = true; 
+            webcam = new tmImage.Webcam(320, 320, flip); 
+            await webcam.setup(); 
+            await webcam.play();
+            
+            // เริ่มลูปการทำงานของกล้อง
+            window.requestAnimationFrame(loop);
+
+            // แสดงผลกล้องบนหน้าเว็บ
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
+            labelContainer = document.getElementById("label-container");
+            
+            // สร้างโครงสร้างแถบแสดงผลความน่าจะเป็นให้สวยงาม
+            for (let i = 0; i < maxPredictions; i++) {
+                const row = document.createElement("div");
+                row.className = "bg-slate-50 p-3 rounded-lg border border-slate-100 flex flex-col gap-1.5";
+                row.innerHTML = `
+                    <div class="flex justify-between text-sm font-medium">
+                        <span class="class-name text-slate-700">-</span>
+                        <span class="class-prob text-indigo-600">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2">
+                        <div class="progress-bar bg-indigo-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                `;
+                labelContainer.appendChild(row);
+            }
+
+            startBtn.innerText = "ระบบกำลังทำงาน...";
+            startBtn.className = "w-full bg-emerald-500 text-white font-medium py-3 px-4 rounded-xl cursor-not-allowed mb-6 text-center";
+        }
+
+        // ลูปควบคุมหน้าจอและการทำงาน
+        async function loop(timestamp) {
+            webcam.update(); // อัปเดตเฟรมของกล้องเพื่อให้ภาพเคลื่อนไหวลื่นไหลตลอดเวลา
+            
+            // ตรวจสอบว่าเวลาผ่านไปครบ 3,000 มิลลิวินาที (3 วินาที) หรือยัง
+            if (!lastPredictTime || timestamp - lastPredictTime >= 3000) {
+                lastPredictTime = timestamp; // บันทึกเวลาปัจจุบันไว้
+                await predict(); // เรียกฟังก์ชันทำนายผล
+            }
+            
+            window.requestAnimationFrame(loop);
+        }
+
+        // ฟังก์ชันทำนายผลภาพจากกล้อง
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+            
+            for (let i = 0; i < maxPredictions; i++) {
+                const className = prediction[i].className;
+                const probability = prediction[i].probability;
+                const percentage = (probability * 100).toFixed(0) + "%";
+                
+                // อัปเดตข้อความและแถบความคืบหน้า (Progress Bar)
+                const rows = labelContainer.childNodes;
+                rows[i].querySelector(".class-name").innerText = className;
+                rows[i].querySelector(".class-prob").innerText = percentage;
+                rows[i].querySelector(".progress-bar").style.width = percentage;
+            }
+        }
+    </script>
 </body>
 </html>
